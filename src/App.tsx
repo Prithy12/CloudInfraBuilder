@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import CodePanel from './components/CodePanel';
 import CityScene from './components/CityScene';
+import BoltBadge from './components/BoltBadge';
 
 function App() {
   const [showCodePanel, setShowCodePanel] = useState(true);
@@ -13,6 +14,7 @@ function App() {
     <div className="w-full h-screen overflow-hidden">
       <CodePanel onPeelAway={handlePeelAway} isVisible={showCodePanel} />
       <CityScene isVisible={!showCodePanel} />
+      <BoltBadge />
     </div>
   );
 }

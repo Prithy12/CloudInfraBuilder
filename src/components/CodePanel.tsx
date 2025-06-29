@@ -1,5 +1,6 @@
 import React from 'react';
 import { Code, Layers } from 'lucide-react';
+import BoltBadge from './BoltBadge';
 
 interface CodePanelProps {
   onPeelAway: () => void;
@@ -42,6 +43,7 @@ export default function CodePanel({ onPeelAway, isVisible }: CodePanelProps) {
         isVisible ? 'translate-y-0' : '-translate-y-full'
       }`}
     >
+      <BoltBadge />
       <div className="h-full flex flex-col items-center justify-center p-8">
         <div className="max-w-4xl w-full">
           <div className="text-center mb-8">

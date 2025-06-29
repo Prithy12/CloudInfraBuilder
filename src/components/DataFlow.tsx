@@ -1,15 +1,21 @@
 import React, { useRef, useMemo } from 'react';
 import { useFrame } from '@react-three/fiber';
 import { Mesh, Vector3 } from 'three';
-import { cityData } from '../data/cityData';
+import { Tenant, Link } from '../data/cityData';
 
-export default function DataFlow() {
+interface DataFlowProps {
+  tenants: Tenant[];
+  links: Link[];
+  highlight?: boolean;
+}
+
+export default function DataFlow({ tenants, links, highlight }: DataFlowProps) {
   const sphereRefs = useRef<(Mesh | null)[]>([]);
   
   const flows = useMemo(() => {
-    return cityData.links.map((link, index) => {
-      const fromTenant = cityData.tenants.find(t => t.id === link.from);
-      const toTenant = cityData.tenants.find(t => t.id === link.to);
+    return links.map((link, index) => {
+      const fromTenant = tenants.find(t => t.id === link.from);
+      const toTenant = tenants.find(t => t.id === link.to);
       
       if (!fromTenant || !toTenant) return null;
       
@@ -26,7 +32,7 @@ export default function DataFlow() {
         progress: Math.random() // Start at random positions
       };
     }).filter(Boolean);
-  }, []);
+  }, [tenants, links]);
 
   useFrame((state) => {
     flows.forEach((flow, index) => {
@@ -47,16 +53,33 @@ export default function DataFlow() {
       
       // Add some vertical bobbing
       sphere.position.y += Math.sin(state.clock.elapsedTime * 3 + index) * 0.1;
+      
+      // Add subtle rotation
+      sphere.rotation.y += 0.02;
     });
   });
 
   const getFlowColor = (type: string) => {
+    if (highlight) return '#f43f5e'; // rose-500 for highlight
     switch (type) {
       case 'data': return '#3b82f6'; // blue
       case 'sync': return '#10b981'; // emerald
       case 'backup': return '#f59e0b'; // amber
       default: return '#6b7280'; // gray
     }
+  };
+
+  const getFlowMaterial = (type: string) => {
+    const color = getFlowColor(type);
+    return {
+      color,
+      emissive: color,
+      emissiveIntensity: highlight ? 0.3 : 0.1,
+      roughness: 0.2,
+      metalness: 0.8,
+      transparent: true,
+      opacity: 0.9
+    };
   };
 
   return (
@@ -68,10 +91,29 @@ export default function DataFlow() {
             <mesh
               ref={(el) => { sphereRefs.current[index] = el; }}
               position={[flow.start.x, flow.start.y, flow.start.z]}
+              castShadow
             >
-              <sphereGeometry args={[0.05, 8, 8]} />
-              <meshBasicMaterial color={getFlowColor(flow.type)} />
+              <sphereGeometry args={[highlight ? 0.12 : 0.08, 16, 16]} />
+              <meshStandardMaterial {...getFlowMaterial(flow.type)} />
             </mesh>
+            
+            {/* Glow effect for highlighted flows */}
+            {highlight && (
+              <mesh
+                position={[flow.start.x, flow.start.y, flow.start.z]}
+              >
+                <sphereGeometry args={[0.18, 16, 16]} />
+                <meshStandardMaterial 
+                  color="#f43f5e"
+                  emissive="#f43f5e"
+                  emissiveIntensity={0.2}
+                  transparent
+                  opacity={0.3}
+                  roughness={0.1}
+                  metalness={0.9}
+                />
+              </mesh>
+            )}
             
             {/* Connection line */}
             <line>
@@ -86,7 +128,12 @@ export default function DataFlow() {
                   itemSize={3}
                 />
               </bufferGeometry>
-              <lineBasicMaterial color="#64748b" opacity={0.3} transparent />
+              <lineBasicMaterial 
+                color={highlight ? '#f43f5e' : '#64748b'} 
+                opacity={highlight ? 0.8 : 0.4} 
+                transparent 
+                linewidth={highlight ? 3 : 1}
+              />
             </line>
           </React.Fragment>
         )
